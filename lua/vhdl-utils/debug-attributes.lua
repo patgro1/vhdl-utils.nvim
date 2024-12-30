@@ -81,7 +81,6 @@ local function add_debug_attributes_to_signals(bufnr, start_row, end_row, positi
     end
 
     local insertion_row = end_row - 1
-    print(vim.treesitter.get_node_range(scope_node))
     if scope_node and position_choice == "e" then
         _, _, insertion_row, _ = vim.treesitter.get_node_range(scope_node)
     end
