@@ -10,22 +10,30 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04]
-        rev: [nightly, v0.9.5, v0.10.0]
+        rev: [nightly, v0.11.4, v0.10.0]
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: rhysd/action-setup-vim@v1
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
-          version: ${{ matrix.rev }}
-
-      - name: Prepare
+          version: stable
+            
+      - name: Setup test dependencies
         run: |
-          bash scripts/install_ci.sh
-
-
+          mkdir -p ~/.local/share/nvim/site/pack/ci/opt
+          ln -s "$PWD" ~/.local/share/nvim/site/pack/ci/opt/vhdl-utils.nvim
+          cd ~/.local/share/nvim/site/pack/ci/opt
+          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim 
+          git clone --depth 1 https://github.com/nvim-treesitter/nvim-treesitter.git
+      
+      - name: Install VHDL parser
+        run: |
+          nvim --headless +"lua require('nvim-treesitter.install').update({ with_sync = true })({ 'vhdl' })" +quit
+      
       - name: Run tests
         run: |
-          nvim --version
-          make test
+          nvim --headless -u tests/minimal_init.lua \
+            -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}"
